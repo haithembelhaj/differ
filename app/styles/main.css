@@ -1,0 +1,25 @@
+body {
+
+  font-family: Georgia, serif;
+  padding: 20px;
+  text-align: center;
+}
+
+
+.button{
+
+  display: inline-block;
+  padding: 5px 15px;
+  text-align: center;
+  border: 1px solid rgba(0,0,0, 0.4);
+  border-radius: 4px;
+  text-decoration: none;
+  color: black;
+  transition: all 0.2s;
+  outline: 0;
+}
+
+.button:hover{
+
+  border-color: rgba(0,0,0, 0.6);
+}

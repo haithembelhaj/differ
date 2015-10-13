@@ -1,0 +1,1 @@
+{"version":3,"sources":["../scripts.babel/dialog.js"],"names":[],"mappings":";;;;;;;;;qBAAgB,QAAQ;;;;AAGxB,IAAI,KAAK,GAAG,KAAK,CAAC,EAAC,IAAI,EAAE,MAAM,EAAC,CAAC,CAAA;;AAE1B,SAAS,IAAI,GAAE;;AAEpB,OAAK,CAAC,KAAK,EAAE,CAAC;CACf","file":"dialog.js","sourcesContent":["import dom from 'dom.js';\n\n\nlet input = input({type: 'file'})\n\nexport function open(){\n\n  input.click();\n}"]}

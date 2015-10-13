@@ -1,0 +1,1 @@
+{"version":3,"sources":["../scripts.babel/contentscript.js"],"names":[],"mappings":";;;;wBAAmB,WAAW;;;;AAI9B,MAAM,CAAC,OAAO,CAAC,SAAS,CAAC,WAAW,CAAE,UAAC,OAAO,EAAE,MAAM,EAAE,YAAY,EAAI,EAEvE,CAAC,CAAA","file":"contentscript.js","sourcesContent":["import Differ from 'differ.js';\n\n\n\nchrome.runtime.onMessage.addListener( (request, sender, sendResponse) =>{\n\n})\n\n"]}
