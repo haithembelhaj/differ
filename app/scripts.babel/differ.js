@@ -4,7 +4,7 @@ import {center, preventDefault} from './utils.js';
 import Draggable from './draggable.js';
 
 
-let modes = ['difference', 'multiply', 'overlay'];
+let modes = ['exclusion', 'difference', 'multiply'];
 
 let styles = {
   position: 'absolute',

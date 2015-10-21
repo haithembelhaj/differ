@@ -201,7 +201,7 @@ var _draggableJs = require('./draggable.js');
 
 var _draggableJs2 = _interopRequireDefault(_draggableJs);
 
-var modes = ['difference', 'multiply', 'overlay'];
+var modes = ['exclusion', 'difference', 'multiply'];
 
 var styles = {
   position: 'absolute',
