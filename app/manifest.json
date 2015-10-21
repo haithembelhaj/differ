@@ -1,6 +1,6 @@
 {
   "name": "__MSG_appName__",
-  "version": "0.0.5",
+  "version": "0.0.15",
   "manifest_version": 2,
   "description": "__MSG_appDescription__",
   "icons": {
@@ -20,7 +20,6 @@
       "38": "images/icon-38.png"
     },
     "default_title": "differ"
-    //"default_popup": "popup.html"
   },
   "content_scripts": [
     {

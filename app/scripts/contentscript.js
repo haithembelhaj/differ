@@ -1,9 +1,9 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 'use strict';
 
-function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj['default'] = obj; return newObj; } }
-
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
+
+var _utilsJs = require('./utils.js');
 
 var _differJs = require('./differ.js');
 
@@ -11,17 +11,153 @@ var _differJs2 = _interopRequireDefault(_differJs);
 
 var _dropJs = require('./drop.js');
 
-var drop = _interopRequireWildcard(_dropJs);
+var _dropJs2 = _interopRequireDefault(_dropJs);
 
-chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
+var _cropJs = require('./crop.js');
 
-  drop.activate(function (url) {
+var _cropJs2 = _interopRequireDefault(_cropJs);
 
-    new _differJs2['default'](url);
+chrome.runtime.onMessage.addListener(function () {
+
+  _dropJs2['default'](function (url) {
+    return _cropJs2['default'](url, function (image) {
+      return new _differJs2['default'](image);
+    });
   });
 });
 
-},{"./differ.js":3,"./drop.js":5}],2:[function(require,module,exports){
+},{"./crop.js":2,"./differ.js":4,"./drop.js":7,"./utils.js":9}],2:[function(require,module,exports){
+'use strict';
+
+exports.__esModule = true;
+exports['default'] = crop;
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
+
+var _lodash = require('lodash');
+
+var _utilsJs = require('./utils.js');
+
+var _domJs = require('./dom.js');
+
+var _domJs2 = _interopRequireDefault(_domJs);
+
+var _cssJs = require('./css.js');
+
+var _cssJs2 = _interopRequireDefault(_cssJs);
+
+var _draggableJs = require('./draggable.js');
+
+var _draggableJs2 = _interopRequireDefault(_draggableJs);
+
+var _resizeableJs = require('./resizeable.js');
+
+var _resizeableJs2 = _interopRequireDefault(_resizeableJs);
+
+var containerStyles = {
+
+  position: 'absolute',
+  backgroundColor: 'black',
+  zIndex: 10000,
+  top: 0,
+  left: 0
+};
+
+var imageStyles = {
+
+  position: 'absolute',
+  top: 0,
+  left: 0
+};
+
+var image = _domJs2['default'].img({ style: _cssJs2['default'](_lodash.extend({}, imageStyles, { opacity: 0.5 })) });
+var canvas = _domJs2['default'].canvas({ style: _cssJs2['default'](imageStyles) });
+var container = _domJs2['default'].div({ style: _cssJs2['default'](containerStyles) }, [image, canvas]);
+
+var context = canvas.getContext('2d');
+
+var imageWidth = 0;
+var imageHeight = 0;
+
+var x = 0;
+var y = 0;
+
+var callback = undefined;
+
+var resizeable = new _resizeableJs2['default'](canvas);
+var drag = new _draggableJs2['default'](canvas);
+
+resizeable.on('resize', function (_ref) {
+  var width = _ref.width;
+  var height = _ref.height;
+  return resize(width, height);
+});
+
+drag.on('move', function (_ref2) {
+  var left = _ref2.left;
+  var top = _ref2.top;
+  return move(-left, -top);
+});
+
+canvas.addEventListener('dblclick', finish);
+
+function move(_x, _y) {
+
+  x = _x;
+  y = _y;
+
+  draw();
+}
+
+function resize(width, height) {
+
+  canvas.width = width;
+  canvas.height = height;
+
+  draw();
+}
+
+function draw() {
+
+  context.drawImage(image, x, y, imageWidth, imageHeight);
+}
+
+function finish() {
+
+  callback(canvas.toDataURL('image/png'));
+
+  _utilsJs.hide(container);
+}
+
+function crop(url, fn) {
+
+  callback = fn;
+
+  image.src = url;
+
+  _utilsJs.show(container);
+
+  image.onload = function () {
+
+    imageWidth = this.width;
+    imageHeight = this.height;
+
+    container.style.width = imageWidth + 'px';
+    container.style.height = imageHeight + 'px';
+
+    var width = Math.min(imageWidth / 2, 200);
+    var height = Math.min(imageHeight / 2, 200);
+
+    resize(width, height);
+
+    //drag.move((imageWidth - width)/2, (imageHeight - height)/2)
+  };
+}
+
+document.body.appendChild(container);
+module.exports = exports['default'];
+
+},{"./css.js":3,"./dom.js":5,"./draggable.js":6,"./resizeable.js":8,"./utils.js":9,"lodash":11}],3:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -42,7 +178,7 @@ function css(obj) {
 
 module.exports = exports['default'];
 
-},{"lodash":6}],3:[function(require,module,exports){
+},{"lodash":11}],4:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -59,135 +195,71 @@ var _cssJs = require('./css.js');
 
 var _cssJs2 = _interopRequireDefault(_cssJs);
 
-var body = document.body;
-var html = document.documentElement;
+var _utilsJs = require('./utils.js');
 
-var size = pageSize();
+var _draggableJs = require('./draggable.js');
+
+var _draggableJs2 = _interopRequireDefault(_draggableJs);
+
+var modes = ['difference', 'multiply', 'overlay'];
 
 var styles = {
   position: 'absolute',
-  cursor: 'move',
-  mixBlendMode: 'difference'
+  zIndex: 10000,
+  cursor: 'move'
 };
 
 var Differ = (function () {
   function Differ(url) {
+    var _this = this;
+
     _classCallCheck(this, Differ);
 
     this.url = url;
     this.image = _domJs2['default'].img({ src: url, style: _cssJs2['default'](styles) });
 
-    console.log(size);
-
     this.image.tabIndex = '1';
-    this.image.style.top = size.height / 2 + 'px';
-    this.image.style.left = size.width / 2 + 'px';
 
-    new Draggable(this.image);
+    this.mode = 0;
 
-    body.appendChild(this.image);
+    this.drag = new _draggableJs2['default'](this.image);
+
+    document.body.appendChild(this.image);
+
+    _utilsJs.center(this.image);
+
+    this.changeBlend();
+
+    this.image.addEventListener('keydown', function (ev) {
+
+      ev.preventDefault();
+
+      var key = ev.which || ev.keyCode || 0;
+
+      if (key === 77) {
+
+        _this.changeBlend();
+      }
+    });
   }
 
-  Differ.prototype.destroy = function destroy() {};
+  Differ.prototype.destroy = function destroy() {
+
+    this.drag.destroy();
+  };
+
+  Differ.prototype.changeBlend = function changeBlend() {
+
+    this.image.style.mixBlendMode = modes[this.mode++ % modes.length];
+  };
 
   return Differ;
 })();
 
 exports['default'] = Differ;
-
-var Draggable = function Draggable(el) {
-  _classCallCheck(this, Draggable);
-
-  this.el = el;
-
-  var startPageX = 0;
-  var startPageY = 0;
-  var top = 0;
-  var left = 0;
-
-  var drag = preventDefault(function (_ref) {
-    var pageY = _ref.pageY;
-    var pageX = _ref.pageX;
-
-    move(top + pageY - startPageY, left + pageX - startPageX);
-  });
-
-  el.style.position = 'absolute';
-
-  el.addEventListener('mousedown', preventDefault(start));
-  el.addEventListener('mouseup', preventDefault(stop));
-  el.addEventListener('keydown', preventDefault(keydown));
-
-  function start(ev) {
-
-    top = el.offsetTop;
-    left = el.offsetLeft;
-    startPageX = ev.pageX;
-    startPageY = ev.pageY;
-
-    el.focus();
-
-    window.addEventListener('mousemove', drag, true);
-  }
-
-  function stop() {
-
-    window.removeEventListener('mousemove', drag, true);
-  }
-
-  function keydown(ev) {
-
-    var LEFT = 37;
-    var UP = 38;
-    var RIGHT = 39;
-    var DOWN = 40;
-
-    var key = ev.which || ev.keyCode || 0;
-
-    switch (key) {
-      case UP:
-        move(el.offsetTop - 1, el.offsetLeft);
-        break;
-      case DOWN:
-        move(el.offsetTop + 1, el.offsetLeft);
-        break;
-      case LEFT:
-        move(el.offsetTop, el.offsetLeft - 1);
-        break;
-      case RIGHT:
-        move(el.offsetTop, el.offsetLeft + 1);
-        break;
-    }
-  }
-
-  function move(top, left) {
-
-    el.style.top = top + 'px';
-    el.style.left = left + 'px';
-  }
-};
-
-function preventDefault(fn) {
-
-  return function (ev) {
-
-    ev.stopPropagation();
-    ev.preventDefault();
-
-    fn(ev);
-  };
-}
-
-function pageSize() {
-
-  return {
-    height: Math.max(body.scrollHeight, body.offsetHeight, html.clientHeight, html.scrollHeight, html.offsetHeight),
-    width: Math.max(body.scrollWidth, body.offsetWidth, html.clientWidth, html.scrollWidth, html.offsetWidth)
-  };
-}
 module.exports = exports['default'];
 
-},{"./css.js":2,"./dom.js":4}],4:[function(require,module,exports){
+},{"./css.js":3,"./dom.js":5,"./draggable.js":6,"./utils.js":9}],5:[function(require,module,exports){
 /**
  * DOM
  *
@@ -257,11 +329,112 @@ function createAlias(tagname) {
 }
 module.exports = exports["default"];
 
-},{}],5:[function(require,module,exports){
+},{}],6:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
-exports.activate = activate;
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== 'function' && superClass !== null) { throw new TypeError('Super expression must either be null or a function, not ' + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+var _events = require('events');
+
+var _utilsJs = require('./utils.js');
+
+var Draggable = (function (_EventEmitter) {
+  _inherits(Draggable, _EventEmitter);
+
+  function Draggable(el) {
+    _classCallCheck(this, Draggable);
+
+    _EventEmitter.call(this);
+
+    var self = this;
+
+    this.el = el;
+
+    var startPageX = 0;
+    var startPageY = 0;
+    var top = 0;
+    var left = 0;
+
+    var drag = _utilsJs.preventDefault(function (_ref) {
+      var pageY = _ref.pageY;
+      var pageX = _ref.pageX;
+
+      self.move(top + pageY - startPageY, left + pageX - startPageX);
+    });
+
+    el.style.position = 'absolute';
+
+    window.addEventListener('mouseup', _utilsJs.preventDefault(stop));
+    el.addEventListener('mousedown', _utilsJs.preventDefault(start));
+    el.addEventListener('keydown', _utilsJs.preventDefault(keydown));
+
+    function start(ev) {
+
+      top = el.offsetTop;
+      left = el.offsetLeft;
+      startPageX = ev.pageX;
+      startPageY = ev.pageY;
+
+      el.focus();
+
+      window.addEventListener('mousemove', drag, true);
+    }
+
+    function stop() {
+
+      window.removeEventListener('mousemove', drag, true);
+    }
+
+    function keydown(ev) {
+
+      var LEFT = 37;
+      var UP = 38;
+      var RIGHT = 39;
+      var DOWN = 40;
+
+      var key = ev.which || ev.keyCode || 0;
+
+      switch (key) {
+        case UP:
+          self.move(el.offsetTop - 1, el.offsetLeft);
+          break;
+        case DOWN:
+          self.move(el.offsetTop + 1, el.offsetLeft);
+          break;
+        case LEFT:
+          self.move(el.offsetTop, el.offsetLeft - 1);
+          break;
+        case RIGHT:
+          self.move(el.offsetTop, el.offsetLeft + 1);
+          break;
+      }
+    }
+  }
+
+  Draggable.prototype.move = function move(top, left) {
+    var emit = arguments.length <= 2 || arguments[2] === undefined ? true : arguments[2];
+
+    this.el.style.top = top + 'px';
+    this.el.style.left = left + 'px';
+
+    if (emit) this.emit('move', { top: top, left: left });
+  };
+
+  return Draggable;
+})(_events.EventEmitter);
+
+exports['default'] = Draggable;
+module.exports = exports['default'];
+
+},{"./utils.js":9,"events":10}],7:[function(require,module,exports){
+'use strict';
+
+exports.__esModule = true;
+exports['default'] = drop;
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
 
@@ -272,6 +445,8 @@ var _domJs2 = _interopRequireDefault(_domJs);
 var _cssJs = require('./css.js');
 
 var _cssJs2 = _interopRequireDefault(_cssJs);
+
+var _utilsJs = require('./utils.js');
 
 var styles = {
 
@@ -291,20 +466,21 @@ var reader = new FileReader();
 
 var dropZone = _domJs2['default'].div({ style: _cssJs2['default'](styles) });
 
-dropZone.addEventListener('dragover', stopPropagation(handleDragOver));
-dropZone.addEventListener('drop', stopPropagation(handleFileSelect));
+dropZone.addEventListener('dragover', _utilsJs.preventDefault(handleDragOver));
+dropZone.addEventListener('drop', _utilsJs.preventDefault(handleFileSelect));
 
 document.body.appendChild(dropZone);
 
 reader.onload = function (e) {
-  return callback(e.target.result);
+
+  callback(e.target.result);
 };
 
-function activate(fn) {
+function drop(fn) {
 
   callback = fn;
 
-  dropZone.style.display = 'block';
+  _utilsJs.show(dropZone);
 }
 
 function handleFileSelect(ev) {
@@ -313,15 +489,112 @@ function handleFileSelect(ev) {
 
   reader.readAsDataURL(files[0]);
 
-  dropZone.style.display = 'none';
+  _utilsJs.hide(dropZone);
 }
 
 function handleDragOver(ev) {
 
   ev.dataTransfer.dropEffect = 'copy';
 }
+module.exports = exports['default'];
 
-function stopPropagation(fn) {
+},{"./css.js":3,"./dom.js":5,"./utils.js":9}],8:[function(require,module,exports){
+'use strict';
+
+exports.__esModule = true;
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== 'function' && superClass !== null) { throw new TypeError('Super expression must either be null or a function, not ' + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+var _events = require('events');
+
+var _utilsJs = require('./utils.js');
+
+var abs = Math.abs;
+
+var offset = 50;
+
+var Resizeable = (function (_EventEmitter) {
+  _inherits(Resizeable, _EventEmitter);
+
+  function Resizeable(el) {
+    _classCallCheck(this, Resizeable);
+
+    _EventEmitter.call(this);
+
+    var self = this;
+
+    var width = 0;
+    var height = 0;
+
+    var startPageX = 0;
+    var startPageY = 0;
+
+    el.addEventListener('mousedown', _utilsJs.preventDefault(start));
+    window.addEventListener('mouseup', _utilsJs.preventDefault(stop));
+
+    var drag = _utilsJs.preventDefault(function (_ref) {
+      var pageY = _ref.pageY;
+      var pageX = _ref.pageX;
+
+      resize(width + pageX - startPageX, height + pageY - startPageY);
+    });
+
+    function start(ev) {
+
+      var elRect = el.getBoundingClientRect();
+      var bodyRect = document.body.getBoundingClientRect();
+
+      width = elRect.width;
+      height = elRect.height;
+
+      startPageX = ev.pageX;
+      startPageY = ev.pageY;
+
+      var diffX = abs(startPageX - (elRect.left - bodyRect.left + width));
+      var diffY = abs(startPageY - (elRect.top - bodyRect.top + height));
+
+      if (diffX < offset && diffY < offset) {
+
+        ev.stopImmediatePropagation();
+        window.addEventListener('mousemove', drag, true);
+      }
+    }
+
+    function stop() {
+
+      window.removeEventListener('mousemove', drag, true);
+    }
+
+    function resize(width, height) {
+
+      el.width = width;
+      el.height = height;
+
+      self.emit('resize', { width: width, height: height });
+    }
+  }
+
+  return Resizeable;
+})(_events.EventEmitter);
+
+exports['default'] = Resizeable;
+module.exports = exports['default'];
+
+},{"./utils.js":9,"events":10}],9:[function(require,module,exports){
+'use strict';
+
+exports.__esModule = true;
+var _bind = Function.prototype.bind;
+exports.preventDefault = preventDefault;
+exports.instance = instance;
+exports.logger = logger;
+exports.hide = hide;
+exports.show = show;
+exports.center = center;
+
+function preventDefault(fn) {
 
   return function (ev) {
 
@@ -329,10 +602,363 @@ function stopPropagation(fn) {
     ev.preventDefault();
 
     fn(ev);
+
+    return false;
   };
 }
 
-},{"./css.js":2,"./dom.js":4}],6:[function(require,module,exports){
+function instance(c) {
+
+  return function () {
+    for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
+      args[_key] = arguments[_key];
+    }
+
+    return new (_bind.apply(c, [null].concat(args)))();
+  };
+}
+
+function logger(fn) {
+
+  return function () {
+    for (var _len2 = arguments.length, args = Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
+      args[_key2] = arguments[_key2];
+    }
+
+    console.log.apply(console, [fn.name].concat(args));
+
+    fn.apply(undefined, args);
+  };
+}
+
+function hide(el) {
+
+  el.style.display = 'none';
+}
+
+function show(el) {
+
+  el.style.display = 'block';
+}
+
+function center(el) {
+
+  var w = Math.max(document.documentElement.clientWidth, window.innerWidth || 0);
+  var h = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
+
+  var bodyRect = document.body.getBoundingClientRect();
+  var elRect = el.getBoundingClientRect();
+
+  el.style.left = w / 2 - bodyRect.left - elRect.width / 2 + 'px';
+  el.style.top = h / 2 - bodyRect.top - elRect.height / 2 + 'px';
+
+  return el;
+}
+
+},{}],10:[function(require,module,exports){
+// Copyright Joyent, Inc. and other Node contributors.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a
+// copy of this software and associated documentation files (the
+// "Software"), to deal in the Software without restriction, including
+// without limitation the rights to use, copy, modify, merge, publish,
+// distribute, sublicense, and/or sell copies of the Software, and to permit
+// persons to whom the Software is furnished to do so, subject to the
+// following conditions:
+//
+// The above copyright notice and this permission notice shall be included
+// in all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
+// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
+// USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+function EventEmitter() {
+  this._events = this._events || {};
+  this._maxListeners = this._maxListeners || undefined;
+}
+module.exports = EventEmitter;
+
+// Backwards-compat with node 0.10.x
+EventEmitter.EventEmitter = EventEmitter;
+
+EventEmitter.prototype._events = undefined;
+EventEmitter.prototype._maxListeners = undefined;
+
+// By default EventEmitters will print a warning if more than 10 listeners are
+// added to it. This is a useful default which helps finding memory leaks.
+EventEmitter.defaultMaxListeners = 10;
+
+// Obviously not all Emitters should be limited to 10. This function allows
+// that to be increased. Set to zero for unlimited.
+EventEmitter.prototype.setMaxListeners = function(n) {
+  if (!isNumber(n) || n < 0 || isNaN(n))
+    throw TypeError('n must be a positive number');
+  this._maxListeners = n;
+  return this;
+};
+
+EventEmitter.prototype.emit = function(type) {
+  var er, handler, len, args, i, listeners;
+
+  if (!this._events)
+    this._events = {};
+
+  // If there is no 'error' event listener then throw.
+  if (type === 'error') {
+    if (!this._events.error ||
+        (isObject(this._events.error) && !this._events.error.length)) {
+      er = arguments[1];
+      if (er instanceof Error) {
+        throw er; // Unhandled 'error' event
+      }
+      throw TypeError('Uncaught, unspecified "error" event.');
+    }
+  }
+
+  handler = this._events[type];
+
+  if (isUndefined(handler))
+    return false;
+
+  if (isFunction(handler)) {
+    switch (arguments.length) {
+      // fast cases
+      case 1:
+        handler.call(this);
+        break;
+      case 2:
+        handler.call(this, arguments[1]);
+        break;
+      case 3:
+        handler.call(this, arguments[1], arguments[2]);
+        break;
+      // slower
+      default:
+        len = arguments.length;
+        args = new Array(len - 1);
+        for (i = 1; i < len; i++)
+          args[i - 1] = arguments[i];
+        handler.apply(this, args);
+    }
+  } else if (isObject(handler)) {
+    len = arguments.length;
+    args = new Array(len - 1);
+    for (i = 1; i < len; i++)
+      args[i - 1] = arguments[i];
+
+    listeners = handler.slice();
+    len = listeners.length;
+    for (i = 0; i < len; i++)
+      listeners[i].apply(this, args);
+  }
+
+  return true;
+};
+
+EventEmitter.prototype.addListener = function(type, listener) {
+  var m;
+
+  if (!isFunction(listener))
+    throw TypeError('listener must be a function');
+
+  if (!this._events)
+    this._events = {};
+
+  // To avoid recursion in the case that type === "newListener"! Before
+  // adding it to the listeners, first emit "newListener".
+  if (this._events.newListener)
+    this.emit('newListener', type,
+              isFunction(listener.listener) ?
+              listener.listener : listener);
+
+  if (!this._events[type])
+    // Optimize the case of one listener. Don't need the extra array object.
+    this._events[type] = listener;
+  else if (isObject(this._events[type]))
+    // If we've already got an array, just append.
+    this._events[type].push(listener);
+  else
+    // Adding the second element, need to change to array.
+    this._events[type] = [this._events[type], listener];
+
+  // Check for listener leak
+  if (isObject(this._events[type]) && !this._events[type].warned) {
+    var m;
+    if (!isUndefined(this._maxListeners)) {
+      m = this._maxListeners;
+    } else {
+      m = EventEmitter.defaultMaxListeners;
+    }
+
+    if (m && m > 0 && this._events[type].length > m) {
+      this._events[type].warned = true;
+      console.error('(node) warning: possible EventEmitter memory ' +
+                    'leak detected. %d listeners added. ' +
+                    'Use emitter.setMaxListeners() to increase limit.',
+                    this._events[type].length);
+      if (typeof console.trace === 'function') {
+        // not supported in IE 10
+        console.trace();
+      }
+    }
+  }
+
+  return this;
+};
+
+EventEmitter.prototype.on = EventEmitter.prototype.addListener;
+
+EventEmitter.prototype.once = function(type, listener) {
+  if (!isFunction(listener))
+    throw TypeError('listener must be a function');
+
+  var fired = false;
+
+  function g() {
+    this.removeListener(type, g);
+
+    if (!fired) {
+      fired = true;
+      listener.apply(this, arguments);
+    }
+  }
+
+  g.listener = listener;
+  this.on(type, g);
+
+  return this;
+};
+
+// emits a 'removeListener' event iff the listener was removed
+EventEmitter.prototype.removeListener = function(type, listener) {
+  var list, position, length, i;
+
+  if (!isFunction(listener))
+    throw TypeError('listener must be a function');
+
+  if (!this._events || !this._events[type])
+    return this;
+
+  list = this._events[type];
+  length = list.length;
+  position = -1;
+
+  if (list === listener ||
+      (isFunction(list.listener) && list.listener === listener)) {
+    delete this._events[type];
+    if (this._events.removeListener)
+      this.emit('removeListener', type, listener);
+
+  } else if (isObject(list)) {
+    for (i = length; i-- > 0;) {
+      if (list[i] === listener ||
+          (list[i].listener && list[i].listener === listener)) {
+        position = i;
+        break;
+      }
+    }
+
+    if (position < 0)
+      return this;
+
+    if (list.length === 1) {
+      list.length = 0;
+      delete this._events[type];
+    } else {
+      list.splice(position, 1);
+    }
+
+    if (this._events.removeListener)
+      this.emit('removeListener', type, listener);
+  }
+
+  return this;
+};
+
+EventEmitter.prototype.removeAllListeners = function(type) {
+  var key, listeners;
+
+  if (!this._events)
+    return this;
+
+  // not listening for removeListener, no need to emit
+  if (!this._events.removeListener) {
+    if (arguments.length === 0)
+      this._events = {};
+    else if (this._events[type])
+      delete this._events[type];
+    return this;
+  }
+
+  // emit removeListener for all listeners on all events
+  if (arguments.length === 0) {
+    for (key in this._events) {
+      if (key === 'removeListener') continue;
+      this.removeAllListeners(key);
+    }
+    this.removeAllListeners('removeListener');
+    this._events = {};
+    return this;
+  }
+
+  listeners = this._events[type];
+
+  if (isFunction(listeners)) {
+    this.removeListener(type, listeners);
+  } else {
+    // LIFO order
+    while (listeners.length)
+      this.removeListener(type, listeners[listeners.length - 1]);
+  }
+  delete this._events[type];
+
+  return this;
+};
+
+EventEmitter.prototype.listeners = function(type) {
+  var ret;
+  if (!this._events || !this._events[type])
+    ret = [];
+  else if (isFunction(this._events[type]))
+    ret = [this._events[type]];
+  else
+    ret = this._events[type].slice();
+  return ret;
+};
+
+EventEmitter.listenerCount = function(emitter, type) {
+  var ret;
+  if (!emitter._events || !emitter._events[type])
+    ret = 0;
+  else if (isFunction(emitter._events[type]))
+    ret = 1;
+  else
+    ret = emitter._events[type].length;
+  return ret;
+};
+
+function isFunction(arg) {
+  return typeof arg === 'function';
+}
+
+function isNumber(arg) {
+  return typeof arg === 'number';
+}
+
+function isObject(arg) {
+  return typeof arg === 'object' && arg !== null;
+}
+
+function isUndefined(arg) {
+  return arg === void 0;
+}
+
+},{}],11:[function(require,module,exports){
 (function (global){
 /**
  * @license

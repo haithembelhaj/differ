@@ -2,6 +2,137 @@
 'use strict';
 
 exports.__esModule = true;
+exports['default'] = crop;
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
+
+var _lodash = require('lodash');
+
+var _utilsJs = require('./utils.js');
+
+var _domJs = require('./dom.js');
+
+var _domJs2 = _interopRequireDefault(_domJs);
+
+var _cssJs = require('./css.js');
+
+var _cssJs2 = _interopRequireDefault(_cssJs);
+
+var _draggableJs = require('./draggable.js');
+
+var _draggableJs2 = _interopRequireDefault(_draggableJs);
+
+var _resizeableJs = require('./resizeable.js');
+
+var _resizeableJs2 = _interopRequireDefault(_resizeableJs);
+
+var containerStyles = {
+
+  position: 'absolute',
+  backgroundColor: 'black',
+  zIndex: 10000,
+  top: 0,
+  left: 0
+};
+
+var imageStyles = {
+
+  position: 'absolute',
+  top: 0,
+  left: 0
+};
+
+var image = _domJs2['default'].img({ style: _cssJs2['default'](_lodash.extend({}, imageStyles, { opacity: 0.5 })) });
+var canvas = _domJs2['default'].canvas({ style: _cssJs2['default'](imageStyles) });
+var container = _domJs2['default'].div({ style: _cssJs2['default'](containerStyles) }, [image, canvas]);
+
+var context = canvas.getContext('2d');
+
+var imageWidth = 0;
+var imageHeight = 0;
+
+var x = 0;
+var y = 0;
+
+var callback = undefined;
+
+var resizeable = new _resizeableJs2['default'](canvas);
+var drag = new _draggableJs2['default'](canvas);
+
+resizeable.on('resize', function (_ref) {
+  var width = _ref.width;
+  var height = _ref.height;
+  return resize(width, height);
+});
+
+drag.on('move', function (_ref2) {
+  var left = _ref2.left;
+  var top = _ref2.top;
+  return move(-left, -top);
+});
+
+canvas.addEventListener('dblclick', finish);
+
+function move(_x, _y) {
+
+  x = _x;
+  y = _y;
+
+  draw();
+}
+
+function resize(width, height) {
+
+  canvas.width = width;
+  canvas.height = height;
+
+  draw();
+}
+
+function draw() {
+
+  context.drawImage(image, x, y, imageWidth, imageHeight);
+}
+
+function finish() {
+
+  callback(canvas.toDataURL('image/png'));
+
+  _utilsJs.hide(container);
+}
+
+function crop(url, fn) {
+
+  callback = fn;
+
+  image.src = url;
+
+  _utilsJs.show(container);
+
+  image.onload = function () {
+
+    imageWidth = this.width;
+    imageHeight = this.height;
+
+    container.style.width = imageWidth + 'px';
+    container.style.height = imageHeight + 'px';
+
+    var width = Math.min(imageWidth / 2, 200);
+    var height = Math.min(imageHeight / 2, 200);
+
+    resize(width, height);
+
+    //drag.move((imageWidth - width)/2, (imageHeight - height)/2)
+  };
+}
+
+document.body.appendChild(container);
+module.exports = exports['default'];
+
+},{"./css.js":2,"./dom.js":3,"./draggable.js":4,"./resizeable.js":5,"./utils.js":6,"lodash":8}],2:[function(require,module,exports){
+'use strict';
+
+exports.__esModule = true;
 exports['default'] = css;
 
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj['default'] = obj; return newObj; } }
@@ -19,88 +150,7 @@ function css(obj) {
 
 module.exports = exports['default'];
 
-},{"lodash":7}],2:[function(require,module,exports){
-'use strict';
-
-exports.__esModule = true;
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
-
-var _domJs = require('./dom.js');
-
-var _domJs2 = _interopRequireDefault(_domJs);
-
-var _cssJs = require('./css.js');
-
-var _cssJs2 = _interopRequireDefault(_cssJs);
-
-var _utilsJs = require('./utils.js');
-
-var _draggableJs = require('./draggable.js');
-
-var _draggableJs2 = _interopRequireDefault(_draggableJs);
-
-var modes = ['difference', 'multiply', 'overlay'];
-
-var styles = {
-  position: 'absolute',
-  zIndex: 10000,
-  cursor: 'move'
-};
-
-var Differ = (function () {
-  function Differ(url) {
-    var _this = this;
-
-    _classCallCheck(this, Differ);
-
-    this.url = url;
-    this.image = _domJs2['default'].img({ src: url, style: _cssJs2['default'](styles) });
-
-    this.image.tabIndex = '1';
-
-    this.mode = 0;
-
-    this.drag = new _draggableJs2['default'](this.image);
-
-    document.body.appendChild(this.image);
-
-    _utilsJs.center(this.image);
-
-    this.changeBlend();
-
-    this.image.addEventListener('keydown', function (ev) {
-
-      ev.preventDefault();
-
-      var key = ev.which || ev.keyCode || 0;
-
-      if (key === 77) {
-
-        _this.changeBlend();
-      }
-    });
-  }
-
-  Differ.prototype.destroy = function destroy() {
-
-    this.drag.destroy();
-  };
-
-  Differ.prototype.changeBlend = function changeBlend() {
-
-    this.image.style.mixBlendMode = modes[this.mode++ % modes.length];
-  };
-
-  return Differ;
-})();
-
-exports['default'] = Differ;
-module.exports = exports['default'];
-
-},{"./css.js":1,"./dom.js":3,"./draggable.js":4,"./utils.js":5}],3:[function(require,module,exports){
+},{"lodash":8}],3:[function(require,module,exports){
 /**
  * DOM
  *
@@ -271,7 +321,91 @@ var Draggable = (function (_EventEmitter) {
 exports['default'] = Draggable;
 module.exports = exports['default'];
 
-},{"./utils.js":5,"events":6}],5:[function(require,module,exports){
+},{"./utils.js":6,"events":7}],5:[function(require,module,exports){
+'use strict';
+
+exports.__esModule = true;
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== 'function' && superClass !== null) { throw new TypeError('Super expression must either be null or a function, not ' + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+var _events = require('events');
+
+var _utilsJs = require('./utils.js');
+
+var abs = Math.abs;
+
+var offset = 50;
+
+var Resizeable = (function (_EventEmitter) {
+  _inherits(Resizeable, _EventEmitter);
+
+  function Resizeable(el) {
+    _classCallCheck(this, Resizeable);
+
+    _EventEmitter.call(this);
+
+    var self = this;
+
+    var width = 0;
+    var height = 0;
+
+    var startPageX = 0;
+    var startPageY = 0;
+
+    el.addEventListener('mousedown', _utilsJs.preventDefault(start));
+    window.addEventListener('mouseup', _utilsJs.preventDefault(stop));
+
+    var drag = _utilsJs.preventDefault(function (_ref) {
+      var pageY = _ref.pageY;
+      var pageX = _ref.pageX;
+
+      resize(width + pageX - startPageX, height + pageY - startPageY);
+    });
+
+    function start(ev) {
+
+      var elRect = el.getBoundingClientRect();
+      var bodyRect = document.body.getBoundingClientRect();
+
+      width = elRect.width;
+      height = elRect.height;
+
+      startPageX = ev.pageX;
+      startPageY = ev.pageY;
+
+      var diffX = abs(startPageX - (elRect.left - bodyRect.left + width));
+      var diffY = abs(startPageY - (elRect.top - bodyRect.top + height));
+
+      if (diffX < offset && diffY < offset) {
+
+        ev.stopImmediatePropagation();
+        window.addEventListener('mousemove', drag, true);
+      }
+    }
+
+    function stop() {
+
+      window.removeEventListener('mousemove', drag, true);
+    }
+
+    function resize(width, height) {
+
+      el.width = width;
+      el.height = height;
+
+      self.emit('resize', { width: width, height: height });
+    }
+  }
+
+  return Resizeable;
+})(_events.EventEmitter);
+
+exports['default'] = Resizeable;
+module.exports = exports['default'];
+
+},{"./utils.js":6,"events":7}],6:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -344,7 +478,7 @@ function center(el) {
   return el;
 }
 
-},{}],6:[function(require,module,exports){
+},{}],7:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -647,7 +781,7 @@ function isUndefined(arg) {
   return arg === void 0;
 }
 
-},{}],7:[function(require,module,exports){
+},{}],8:[function(require,module,exports){
 (function (global){
 /**
  * @license
@@ -13002,4 +13136,4 @@ function isUndefined(arg) {
 }.call(this));
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}]},{},[2]);
+},{}]},{},[1]);

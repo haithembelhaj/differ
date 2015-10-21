@@ -1,5 +1,6 @@
 import dom from './dom.js';
 import css from './css.js';
+import {preventDefault, show, hide} from './utils.js';
 
 const styles = {
 
@@ -19,18 +20,22 @@ let reader = new FileReader();
 
 let dropZone = dom.div({style: css(styles)});
 
-dropZone.addEventListener('dragover', stopPropagation(handleDragOver));
-dropZone.addEventListener('drop', stopPropagation(handleFileSelect));
+dropZone.addEventListener('dragover', preventDefault(handleDragOver));
+dropZone.addEventListener('drop', preventDefault(handleFileSelect));
 
 document.body.appendChild(dropZone);
 
-reader.onload = e => callback(e.target.result)
+reader.onload = e => {
 
-export function activate(fn){
+  callback(e.target.result);
+
+}
+
+export default function drop(fn){
 
   callback = fn;
 
-  dropZone.style.display = 'block';
+  show(dropZone);
 }
 
 function handleFileSelect(ev){
@@ -39,22 +44,10 @@ function handleFileSelect(ev){
 
   reader.readAsDataURL(files[0]);
 
-  dropZone.style.display = 'none';
+  hide(dropZone);
 }
 
 function handleDragOver(ev) {
 
   ev.dataTransfer.dropEffect = 'copy';
-}
-
-
-function stopPropagation(fn){
-
-  return function(ev){
-
-    ev.stopPropagation();
-    ev.preventDefault();
-
-    fn(ev);
-  }
 }

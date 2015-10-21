@@ -1,11 +1,10 @@
+import {instance} from './utils.js';
 import Differ from './differ.js';
-import * as drop from './drop.js';
+import drop from './drop.js';
+import crop from './crop.js';
 
-chrome.runtime.onMessage.addListener( (request, sender, sendResponse) =>{
+chrome.runtime.onMessage.addListener( () =>{
 
-  drop.activate((url)=>{
-
-    new Differ(url);
-  })
+  drop(url => crop(url, (image) => new Differ(image)));
 })
 

@@ -19,7 +19,7 @@ function css(obj) {
 
 module.exports = exports['default'];
 
-},{"lodash":4}],2:[function(require,module,exports){
+},{"lodash":5}],2:[function(require,module,exports){
 /**
  * DOM
  *
@@ -93,7 +93,7 @@ module.exports = exports["default"];
 'use strict';
 
 exports.__esModule = true;
-exports.activate = activate;
+exports['default'] = drop;
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
 
@@ -104,6 +104,8 @@ var _domJs2 = _interopRequireDefault(_domJs);
 var _cssJs = require('./css.js');
 
 var _cssJs2 = _interopRequireDefault(_cssJs);
+
+var _utilsJs = require('./utils.js');
 
 var styles = {
 
@@ -123,20 +125,21 @@ var reader = new FileReader();
 
 var dropZone = _domJs2['default'].div({ style: _cssJs2['default'](styles) });
 
-dropZone.addEventListener('dragover', stopPropagation(handleDragOver));
-dropZone.addEventListener('drop', stopPropagation(handleFileSelect));
+dropZone.addEventListener('dragover', _utilsJs.preventDefault(handleDragOver));
+dropZone.addEventListener('drop', _utilsJs.preventDefault(handleFileSelect));
 
 document.body.appendChild(dropZone);
 
 reader.onload = function (e) {
-  return callback(e.target.result);
+
+  callback(e.target.result);
 };
 
-function activate(fn) {
+function drop(fn) {
 
   callback = fn;
 
-  dropZone.style.display = 'block';
+  _utilsJs.show(dropZone);
 }
 
 function handleFileSelect(ev) {
@@ -145,15 +148,28 @@ function handleFileSelect(ev) {
 
   reader.readAsDataURL(files[0]);
 
-  dropZone.style.display = 'none';
+  _utilsJs.hide(dropZone);
 }
 
 function handleDragOver(ev) {
 
   ev.dataTransfer.dropEffect = 'copy';
 }
+module.exports = exports['default'];
 
-function stopPropagation(fn) {
+},{"./css.js":1,"./dom.js":2,"./utils.js":4}],4:[function(require,module,exports){
+'use strict';
+
+exports.__esModule = true;
+var _bind = Function.prototype.bind;
+exports.preventDefault = preventDefault;
+exports.instance = instance;
+exports.logger = logger;
+exports.hide = hide;
+exports.show = show;
+exports.center = center;
+
+function preventDefault(fn) {
 
   return function (ev) {
 
@@ -161,10 +177,60 @@ function stopPropagation(fn) {
     ev.preventDefault();
 
     fn(ev);
+
+    return false;
   };
 }
 
-},{"./css.js":1,"./dom.js":2}],4:[function(require,module,exports){
+function instance(c) {
+
+  return function () {
+    for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
+      args[_key] = arguments[_key];
+    }
+
+    return new (_bind.apply(c, [null].concat(args)))();
+  };
+}
+
+function logger(fn) {
+
+  return function () {
+    for (var _len2 = arguments.length, args = Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
+      args[_key2] = arguments[_key2];
+    }
+
+    console.log.apply(console, [fn.name].concat(args));
+
+    fn.apply(undefined, args);
+  };
+}
+
+function hide(el) {
+
+  el.style.display = 'none';
+}
+
+function show(el) {
+
+  el.style.display = 'block';
+}
+
+function center(el) {
+
+  var w = Math.max(document.documentElement.clientWidth, window.innerWidth || 0);
+  var h = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
+
+  var bodyRect = document.body.getBoundingClientRect();
+  var elRect = el.getBoundingClientRect();
+
+  el.style.left = w / 2 - bodyRect.left - elRect.width / 2 + 'px';
+  el.style.top = h / 2 - bodyRect.top - elRect.height / 2 + 'px';
+
+  return el;
+}
+
+},{}],5:[function(require,module,exports){
 (function (global){
 /**
  * @license
