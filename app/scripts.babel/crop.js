@@ -103,6 +103,7 @@ export default function crop(url, fn){
 
 
 document.body.appendChild(container);
+hide(container);
 
 
 

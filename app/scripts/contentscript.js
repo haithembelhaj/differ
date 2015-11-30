@@ -3,21 +3,18 @@
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
 
-var _utilsJs = require('./utils.js');
-
-var _differJs = require('./differ.js');
-
-var _differJs2 = _interopRequireDefault(_differJs);
-
-var _dropJs = require('./drop.js');
-
-var _dropJs2 = _interopRequireDefault(_dropJs);
-
-var _cropJs = require('./crop.js');
-
-var _cropJs2 = _interopRequireDefault(_cropJs);
-
 chrome.runtime.onMessage.addListener(function () {
+  var _differJs = require('./differ.js');
+
+  var _differJs2 = _interopRequireDefault(_differJs);
+
+  var _dropJs = require('./drop.js');
+
+  var _dropJs2 = _interopRequireDefault(_dropJs);
+
+  var _cropJs = require('./crop.js');
+
+  var _cropJs2 = _interopRequireDefault(_cropJs);
 
   _dropJs2['default'](function (url) {
     return _cropJs2['default'](url, function (image) {
@@ -26,7 +23,7 @@ chrome.runtime.onMessage.addListener(function () {
   });
 });
 
-},{"./crop.js":2,"./differ.js":4,"./drop.js":7,"./utils.js":9}],2:[function(require,module,exports){
+},{"./crop.js":2,"./differ.js":4,"./drop.js":7}],2:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -155,6 +152,7 @@ function crop(url, fn) {
 }
 
 document.body.appendChild(container);
+_utilsJs.hide(container);
 module.exports = exports['default'];
 
 },{"./css.js":3,"./dom.js":5,"./draggable.js":6,"./resizeable.js":8,"./utils.js":9,"lodash":11}],3:[function(require,module,exports){
@@ -470,6 +468,8 @@ dropZone.addEventListener('dragover', _utilsJs.preventDefault(handleDragOver));
 dropZone.addEventListener('drop', _utilsJs.preventDefault(handleFileSelect));
 
 document.body.appendChild(dropZone);
+
+_utilsJs.hide(dropZone);
 
 reader.onload = function (e) {
 

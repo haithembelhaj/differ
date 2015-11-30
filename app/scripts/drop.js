@@ -130,6 +130,8 @@ dropZone.addEventListener('drop', _utilsJs.preventDefault(handleFileSelect));
 
 document.body.appendChild(dropZone);
 
+_utilsJs.hide(dropZone);
+
 reader.onload = function (e) {
 
   callback(e.target.result);

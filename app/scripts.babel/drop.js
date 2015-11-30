@@ -25,6 +25,8 @@ dropZone.addEventListener('drop', preventDefault(handleFileSelect));
 
 document.body.appendChild(dropZone);
 
+hide(dropZone);
+
 reader.onload = e => {
 
   callback(e.target.result);

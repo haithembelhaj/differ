@@ -127,6 +127,7 @@ function crop(url, fn) {
 }
 
 document.body.appendChild(container);
+_utilsJs.hide(container);
 module.exports = exports['default'];
 
 },{"./css.js":2,"./dom.js":3,"./draggable.js":4,"./resizeable.js":5,"./utils.js":6,"lodash":8}],2:[function(require,module,exports){
